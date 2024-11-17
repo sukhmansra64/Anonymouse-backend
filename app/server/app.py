@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from dotenv import load_dotenv
 
 from app.server.routes.user import router as UserRouter
+from app.server.routes.chatroom import router as ChatroomRouter
 from app.server.database import get_db
 
 load_dotenv()
@@ -9,6 +10,7 @@ load_dotenv()
 app = FastAPI()
 
 app.include_router(UserRouter, tags=["User"],prefix="/api/user")
+app.include_router(ChatroomRouter, tags=["Chatroom"], prefix="/api/chatroom")
 
 @app.get("/", tags=["Root"])
 async def root():
