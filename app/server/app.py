@@ -101,9 +101,21 @@ async def chatroom_message(sid, data):
     user_id = data.get("userId")
     message_content = data.get("message")
 
-    if not await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)}):
+    if not chatroom_id or not user_id:
+        return await socket_manager.emit(
+            "error", {"message": "chatroomId and userId are required"}, room=sid
+        )
+
+    chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
+
+    if not chatroom:
         return await socket_manager.emit(
             "error", {"message": "Chatroom not found"}, room=sid
+        )
+
+    if ObjectId(user_id) not in chatroom.get("members", []):
+        return await socket_manager.emit(
+            "error", {"message": "User is not a member of this chatroom"}, room=sid
         )
 
     if not message_content or message_content.strip() == "":
