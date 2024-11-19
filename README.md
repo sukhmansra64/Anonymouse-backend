@@ -102,7 +102,7 @@ This is a FastAPI-based chatroom application that supports user authentication, 
 
 | Method  | Endpoint                  | Description                      | Authentication Required |
 |---------|---------------------------|----------------------------------|--------------------------|
-| `POST`  | `/api/message/`           | Send a message to a chatroom     | Yes                      |
+| `POST`  | `/api/message/`           | Send a message to a chatroom     | Yes (must be a member)   |
 | `GET`   | `/api/message/{chatroom}` | Get all messages in a chatroom   | Yes (must be a member)   |
 
 ---
