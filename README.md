@@ -61,7 +61,7 @@ This is a FastAPI-based chatroom application that supports user authentication, 
     ```env
     MONGO_URI=your_mongodb_connection_string
     JWT_SECRET=your_secret_key
-    JWT_ALGO=HS256
+    JWT_ALGO=algoirthm_of_your_choosing
     ```
 
 5. Run the application:
