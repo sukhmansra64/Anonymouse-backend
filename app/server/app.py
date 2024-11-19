@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from fastapi_socketio import SocketManager
 from bson import ObjectId
 from fastapi.middleware.cors import CORSMiddleware
+from os import getenv
+from jose import jwt, JWTError
 
 from app.server.routes.user import router as UserRouter
 from app.server.routes.chatroom import router as ChatroomRouter
@@ -14,6 +16,9 @@ from app.server.models.chatroom import Chatroom
 from app.server.models.message import Message
 
 load_dotenv()
+
+SECRET_KEY = getenv("JWT_SECRET")
+ALGORITHM = getenv("JWT_ALGO")
 
 app = FastAPI()
 socket_manager = SocketManager(app=app, mount_location="/socket.io", cors_allowed_origins="*")
@@ -43,39 +48,45 @@ async def test_db(database=Depends(get_db)):
 # Socket.IO Events
 @socket_manager.on("connect")
 async def connect(sid, environ):
-    print(f"Socket connected: {sid}")
-
+    try:
+        token = environ.get("HTTP_AUTHORIZATION", None)
+        if not token:
+            raise ConnectionRefusedError("No authorization token provided")
+        token = token.split("Bearer ")[-1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise ConnectionRefusedError("Invalid token payload")
+        await socket_manager.save_session(sid, {"user_id": user_id})
+        print(f"User {user_id} connected via socket: {sid}")
+    except (JWTError, ConnectionRefusedError) as e:
+        print(f"Connection refused: {e}")
+        raise e
 
 @socket_manager.on("disconnect")
 async def disconnect(sid):
     print(f"Socket disconnected: {sid}")
 
-
 @socket_manager.on("joinRoom")
 async def join_room(sid, data):
+    session = await socket_manager.get_session(sid)
+    user_id = session.get("user_id")
     chatroom_id = data.get("chatroomId")
-    user_id = data.get("userId")
-
-    if not chatroom_id or not user_id:
+    if not chatroom_id:
         return await socket_manager.emit(
-            "error", {"message": "chatroomId and userId are required"}, room=sid
+            "error", {"message": "chatroomId is required"}, room=sid
         )
-
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
-
     if not chatroom:
         return await socket_manager.emit(
             "error", {"message": "Chatroom not found"}, room=sid
         )
-
     if ObjectId(user_id) not in chatroom.get("members", []):
         return await socket_manager.emit(
             "error", {"message": "User not authorized to join this chatroom"}, room=sid
         )
-
     await socket_manager.enter_room(sid, chatroom_id)
     print(f"User {user_id} joined chatroom {chatroom_id}")
-
     await socket_manager.emit(
         "notification",
         {"message": f"User {user_id} joined the chatroom"},
@@ -97,39 +108,32 @@ async def leave_room(sid, data):
 
 @socket_manager.on("chatroomMessage")
 async def chatroom_message(sid, data):
+    session = await socket_manager.get_session(sid)
+    user_id = session.get("user_id")
     chatroom_id = data.get("chatroomId")
-    user_id = data.get("userId")
     message_content = data.get("message")
-
-    if not chatroom_id or not user_id:
+    if not chatroom_id:
         return await socket_manager.emit(
-            "error", {"message": "chatroomId and userId are required"}, room=sid
+            "error", {"message": "chatroomId is required"}, room=sid
         )
-
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
-
     if not chatroom:
         return await socket_manager.emit(
             "error", {"message": "Chatroom not found"}, room=sid
         )
-
     if ObjectId(user_id) not in chatroom.get("members", []):
         return await socket_manager.emit(
             "error", {"message": "User is not a member of this chatroom"}, room=sid
         )
-
     if not message_content or message_content.strip() == "":
         return await socket_manager.emit(
             "error", {"message": "Message cannot be empty"}, room=sid
         )
-
     message = Message(chatroom_id=chatroom_id, sender=user_id, content=message_content)
     result = await db["Messages"].insert_one(message.dict())
     saved_message = message.dict()
     saved_message["_id"] = str(result.inserted_id)
-
     print(f"Message saved in chatroom {chatroom_id}: {message_content}")
-
     await socket_manager.emit(
         "newMessage",
         {
