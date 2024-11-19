@@ -44,3 +44,8 @@ class Message(BaseModel):
                 "content": "Hello, everyone!"
             }
         }
+
+class SentMessage(BaseModel):
+    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    chatroom_id: PyObjectId
+    content: str
