@@ -113,20 +113,20 @@ async def get_user(
     response.status_code = status.HTTP_200_OK
     return user
 
-# @route PUT api/user/{user_id}
-# @description Update a user by ID
+# @route PUT api/user
+# @description Update the authenticated user's information
 # @access Protected
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put("/", response_model=UserResponse)
 async def update_user(
-    user_id: str, 
     user: dict, 
     response: Response, 
     payload: dict = Depends(authenticate_user)
 ):
-    if payload["user_id"] != user_id:
+    user_id = payload.get("user_id")
+    if not user_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not authorized to update this user."
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload."
         )
     
     update_result = await db["Users"].update_one(
@@ -137,14 +137,17 @@ async def update_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found!"
         )
+    
     updated_user = await db["Users"].find_one({"_id": ObjectId(user_id)})
     if not updated_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found after update!"
         )
+    
     response.status_code = status.HTTP_200_OK
     return updated_user
+
 
 # @route DELETE api/user/{user_id}
 # @description Delete a user by ID
@@ -170,5 +173,78 @@ async def delete_user(
     
     response.status_code = status.HTTP_200_OK
     return "User deleted."
+
+# @route PUT api/user/dh_keys
+# @description Overwrites the authenticated user's dh_keys array with a new array
+# @access Private
+@router.put("/dh_keys", response_model=str)
+async def update_dh_keys(dh_keys: list[dict], response: Response, payload: dict = Depends(authenticate_user)):
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload.",
+        )
+
+    user = await db["Users"].find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found!",
+        )
+
+    if not isinstance(dh_keys, list) or any(not isinstance(key, dict) for key in dh_keys):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid format for Diffie-Hellman keys. Expected an array of objects.",
+        )
+
+    await db["Users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"dh_keys": dh_keys}}
+    )
+
+    response.status_code = status.HTTP_200_OK
+    return "Diffie-Hellman keys updated successfully."
+
+# @route DELETE api/user/dh_key/{username}
+# @description Pop a Diffie-Hellman key pair by username
+# @access Protected
+@router.delete("/dh_keys/{username}", response_model=dict)
+async def pop_dh_key(
+    username: str,
+    response: Response,
+    payload: dict = Depends(authenticate_user)
+):
+    target_user = await db["Users"].find_one({"username": username})
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Target user not found!"
+        )
+    
+    authenticated_user = await db["Users"].find_one({"_id": ObjectId(payload["user_id"])})
+    if not authenticated_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated user not found!"
+        )
+
+    dh_keys = target_user.get("dh_keys", [])
+    if not dh_keys:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No Diffie-Hellman keys available for this user."
+        )
+
+    popped_key = dh_keys.pop(0)
+
+    await db["Users"].update_one(
+        {"username": username},
+        {"$set": {"dh_keys": dh_keys}}
+    )
+
+    response.status_code = status.HTTP_200_OK
+    return {"popped_key": popped_key}
 
 
