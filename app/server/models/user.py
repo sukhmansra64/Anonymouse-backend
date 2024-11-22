@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
 from bson import ObjectId
 from pydantic.json_schema import JsonSchemaValue
@@ -36,6 +36,7 @@ class User(BaseModel):
     username: str
     password: str
     profile: Profile
+    dh_keys: List[Dict[str, str]] = Field(default=[])
 
     class Config:
         populate_by_name = True
