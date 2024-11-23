@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 
 from app.server.database import get_db
-from app.server.models.user import User, UserResponse, UserLogin
+from app.server.models.user import User, UserResponse, UserLogin, UserRegister
 from app.server.middleware.auth import authenticate_user
 
 db = get_db()
@@ -42,16 +42,32 @@ async def test_login(response: Response, payload: dict = Depends(authenticate_us
 #@description Create a user
 #@access Public
 @router.post("/", response_model=UserResponse)
-async def create_user(user: User, response: Response):
-    user_dict = user.dict(by_alias=True)
-    username = user_dict["username"]
-    arr = await db["Users"].find({"username":username}).to_list()
-    if len(arr) > 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists!")
+async def create_user(new_user: UserRegister, response: Response):
+    username = new_user.username
+    password = new_user.password
+
+    existing_user = await db["Users"].find_one({"username": username})
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already exists!"
+        )
+
+    user_dict = {
+        "username": username,
+        "password": password,
+        "profile": {          
+            "name": "",
+            "about": "",
+            "age": None
+        },
+        "dh_keys": []
+    }
+
     result = await db["Users"].insert_one(user_dict)
-    user_dict["_id"] = result.inserted_id
+    user_dict["_id"] = str(result.inserted_id)
+
     response.status_code = status.HTTP_200_OK
-    
     return user_dict
 
 # @route POST /api/user/login
