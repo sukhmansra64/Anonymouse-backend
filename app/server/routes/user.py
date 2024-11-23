@@ -59,7 +59,6 @@ async def create_user(new_user: UserRegister, response: Response):
         "profile": {          
             "name": "",
             "about": "",
-            "age": None
         },
         "dh_keys": []
     }
