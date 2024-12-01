@@ -139,7 +139,8 @@ async def chatroom_message(sid, data):
         {
             "message": message_content,
             "sender": user_id,
-            "_id": saved_message["_id"],
+            "chatroom":chatroom_id,
+            "_id": saved_message["_id"]
         },
         room=chatroom_id,
     )
