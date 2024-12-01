@@ -101,12 +101,20 @@ async def login(user_login: UserLogin, response: Response):
 # @route GET api/user
 # @description Get all users
 # @access Protected
-@router.get("/", response_model=list[User])
+@router.get("/", response_model=list[UserResponse])
 async def get_all_users(
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):
     users = await db["Users"].find().to_list()
+
+    for user in users:
+        if "dh_keys" in user and isinstance(user["dh_keys"], list):
+            user["dh_keys"] = [
+                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
+                if isinstance(k, str) and isinstance(v, str) 
+            ]
+
     response.status_code = status.HTTP_200_OK
     return users
 
@@ -125,6 +133,13 @@ async def get_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found!"
         )
+    
+    if "dh_keys" in user and isinstance(user["dh_keys"], list):
+            user["dh_keys"] = [
+                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
+                if isinstance(k, str) and isinstance(v, str) 
+            ]
+    
     response.status_code = status.HTTP_200_OK
     return user
 
@@ -159,6 +174,12 @@ async def update_user(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found after update!"
         )
+    
+    if "dh_keys" in updated_user and isinstance(user["dh_keys"], list):
+            updated_user["dh_keys"] = [
+                {str(k): str(v)} for key in updated_user["dh_keys"] for k, v in key.items()
+                if isinstance(k, str) and isinstance(v, str) 
+            ]
     
     response.status_code = status.HTTP_200_OK
     return updated_user

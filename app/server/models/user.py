@@ -49,11 +49,19 @@ class User(BaseModel):
                     "name": "John Doe",
                     "about": "A software engineer passionate about AI.",
                 },
+                "dh_keys": [
+                    {"key1": "DH Public Key 1"},
+                    {"key2": "DH Public Key 2"}
+                ]
             }
         }
 
 class UserResponse(User):
     password: Optional[str] = Field(default=None, exclude=True)
+    id: Optional[PyObjectId] = Field(alias="_id")
+    username: str
+    profile: Optional[Dict[str, str]]
+    dh_keys: Optional[List[Dict[str, str]]]
 
     class Config:
         json_encoders = {ObjectId: str}
@@ -64,7 +72,11 @@ class UserResponse(User):
                 "profile": {
                     "name": "John Doe",
                     "about": "A software engineer passionate about AI."
-                }
+                },
+                "dh_keys": [
+                    {"key1": "DH Public Key 1"},
+                    {"key2": "DH Public Key 2"}
+                ]
             }
         }
 
