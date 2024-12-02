@@ -246,19 +246,19 @@ async def update_dh_keys(dh_keys: list[dict], response: Response, payload: dict 
 # @route DELETE api/user/dh_key/{username}
 # @description Pop a Diffie-Hellman key pair by username
 # @access Protected
-@router.delete("/dh_keys/{username}", response_model=dict)
+@router.delete("/dh_keys/{user_id}", response_model=dict)
 async def pop_dh_key(
-    username: str,
+    user_id: str,
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):
-    target_user = await db["Users"].find_one({"username": username})
+    target_user = await db["Users"].find_one({"_id": ObjectId(user_id)})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Target user not found!"
         )
-    
+
     authenticated_user = await db["Users"].find_one({"_id": ObjectId(payload["user_id"])})
     if not authenticated_user:
         raise HTTPException(
@@ -276,7 +276,7 @@ async def pop_dh_key(
     popped_key = dh_keys.pop(0)
 
     await db["Users"].update_one(
-        {"username": username},
+        {"_id": ObjectId(user_id)},
         {"$set": {"dh_keys": dh_keys}}
     )
 
