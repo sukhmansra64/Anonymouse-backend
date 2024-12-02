@@ -13,7 +13,7 @@ from app.server.routes.message import router as MessageRouter
 from app.server.database import get_db
 
 from app.server.models.chatroom import Chatroom
-from app.server.models.message import Message
+from app.server.models.message import Message, MessageDetails
 
 load_dotenv()
 
@@ -111,10 +111,22 @@ async def chatroom_message(sid, data):
     session = await socket_manager.get_session(sid)
     user_id = session.get("user_id")
     chatroom_id = data.get("chatroomId")
-    message_content = data.get("message")
+    message_details = data.get("message")
     if not chatroom_id:
         return await socket_manager.emit(
             "error", {"message": "chatroomId is required"}, room=sid
+        )
+    if not message_details:
+        return await socket_manager.emit(
+            "error", {"message": "Message details are required"}, room=sid
+        )
+    if not message_details.get("content") or message_details["content"].strip() == "":
+        return await socket_manager.emit(
+            "error", {"message": "Message content cannot be empty"}, room=sid
+        )
+    if not message_details.get("pubKey") or not message_details.get("timestamp"):
+        return await socket_manager.emit(
+            "error", {"message": "pubKey and timestamp are required"}, room=sid
         )
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
     if not chatroom:
@@ -125,22 +137,31 @@ async def chatroom_message(sid, data):
         return await socket_manager.emit(
             "error", {"message": "User is not a member of this chatroom"}, room=sid
         )
-    if not message_content or message_content.strip() == "":
-        return await socket_manager.emit(
-            "error", {"message": "Message cannot be empty"}, room=sid
+    message = Message(
+        chatroom=chatroom_id,
+        sender=user_id,
+        message=MessageDetails(
+            content=message_details["content"],
+            pubKey=message_details["pubKey"],
+            timestamp=message_details["timestamp"]
         )
-    message = Message(chatroom_id=chatroom_id, sender=user_id, content=message_content)
-    result = await db["Messages"].insert_one(message.dict())
-    saved_message = message.dict()
+    )
+    result = await db["Messages"].insert_one(message.dict(by_alias=True))
+    saved_message = message.dict(by_alias=True)
     saved_message["_id"] = str(result.inserted_id)
-    print(f"Message saved in chatroom {chatroom_id}: {message_content}")
+
+    print(f"Message saved in chatroom {chatroom_id}: {message_details['content']}")
     await socket_manager.emit(
         "newMessage",
         {
-            "message": message_content,
+            "_id": saved_message["_id"],
+            "chatroom": chatroom_id,
             "sender": user_id,
-            "chatroom":chatroom_id,
-            "_id": saved_message["_id"]
+            "message": {
+                "content": message_details["content"],
+                "pubKey": message_details["pubKey"],
+                "timestamp": message_details["timestamp"]
+            }
         },
         room=chatroom_id,
     )

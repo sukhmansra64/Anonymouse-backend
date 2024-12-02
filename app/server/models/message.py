@@ -26,11 +26,18 @@ class PyObjectId(ObjectId):
     def __pydantic_modify_json_schema__(cls, schema: dict) -> None:
         schema.update(type="string")
 
+
+class MessageDetails(BaseModel):
+    content: str
+    pubKey: str
+    timestamp: str
+
+
 class Message(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    chatroom_id: PyObjectId
+    chatroom: PyObjectId
     sender: PyObjectId
-    content: str
+    message: MessageDetails
 
     class Config:
         populate_by_name = True
@@ -38,14 +45,17 @@ class Message(BaseModel):
         json_encoders = {ObjectId: str}
         json_schema_extra = {
             "example": {
-                "_id": "507f191e810c19729de860ea",
-                "chatroom_id": "507f191e810c19729de860eb",
+                "id": "507f191e810c19729de860ea",
+                "chatroom": "507f191e810c19729de860eb",
                 "sender": "507f191e810c19729de860ec",
-                "content": "Hello, everyone!"
+                "message": {
+                    "content": "Hello, everyone!",
+                    "pubKey": "public_key_example",
+                    "timestamp": "2024-12-02T12:00:00"
+                }
             }
         }
 
 class SentMessage(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    chatroom_id: PyObjectId
-    content: str
+    chatroom: PyObjectId
+    message: MessageDetails

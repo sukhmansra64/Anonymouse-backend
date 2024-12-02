@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from bson import ObjectId
 from app.server.database import get_db
-from app.server.models.message import Message, SentMessage
+from app.server.models.message import Message, SentMessage, MessageDetails
 from app.server.middleware.auth import authenticate_user
 
 db = get_db()
@@ -38,7 +38,7 @@ async def get_messages(
             detail="You are not authorized to access this chatroom."
         )
 
-    messages = await db["Messages"].find({"chatroom_id": ObjectId(chatroom_id)}).to_list(100)
+    messages = await db["Messages"].find({"chatroom": ObjectId(chatroom_id)}).to_list(100)
     if not messages:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -58,7 +58,7 @@ async def send_message(
     payload: dict = Depends(authenticate_user)
 ):
     user_id = payload["user_id"]
-    chatroom_id = message.chatroom_id
+    chatroom_id = message.chatroom
 
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
     if not chatroom:
@@ -73,10 +73,27 @@ async def send_message(
             detail="You are not authorized to send messages in this chatroom."
         )
 
-    message_dict = message.dict(by_alias=True)
-    message_dict["sender"] = user_id
+    message_dict = {
+        "chatroom": ObjectId(chatroom_id),
+        "sender": ObjectId(user_id),
+        "message": {
+            "content": message.message.content,
+            "pubKey": message.message.pubKey,
+            "timestamp": message.message.timestamp
+        }
+    }
 
     result = await db["Messages"].insert_one(message_dict)
     message_dict["_id"] = str(result.inserted_id)
+
     response.status_code = status.HTTP_200_OK
-    return message_dict
+    return Message(
+        id=message_dict["_id"],
+        chatroom=message_dict["chatroom"],
+        sender=message_dict["sender"],
+        message=MessageDetails(
+            content=message_dict["message"]["content"],
+            pubKey=message_dict["message"]["pubKey"],
+            timestamp=message_dict["message"]["timestamp"]
+        )
+    )
