@@ -16,9 +16,7 @@ class PyObjectId(ObjectId):
 
     @classmethod
     def __get_pydantic_json_schema__(cls, schema: JsonSchemaValue, handler) -> JsonSchemaValue:
-        # Call the handler to ensure compatibility with Pydantic's schema logic
         json_schema = handler(schema)
-        # Modify the schema to represent this as a string type
         json_schema.update(type="string")
         return json_schema
 
@@ -30,6 +28,7 @@ class PyObjectId(ObjectId):
 class MessageDetails(BaseModel):
     content: str
     pubKey: str
+    privKeyId: str
     timestamp: str
 
 
@@ -51,6 +50,7 @@ class Message(BaseModel):
                 "message": {
                     "content": "Hello, everyone!",
                     "pubKey": "public_key_example",
+                    "privKeyId": "private_key_example",
                     "timestamp": "2024-12-02T12:00:00"
                 }
             }

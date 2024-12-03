@@ -79,6 +79,7 @@ async def send_message(
         "message": {
             "content": message.message.content,
             "pubKey": message.message.pubKey,
+            "privKeyId": message.message.privKeyId,
             "timestamp": message.message.timestamp
         }
     }
@@ -94,6 +95,7 @@ async def send_message(
         message=MessageDetails(
             content=message_dict["message"]["content"],
             pubKey=message_dict["message"]["pubKey"],
+            privKeyId=message_dict["message"]["privKeyId"],
             timestamp=message_dict["message"]["timestamp"]
         )
     )

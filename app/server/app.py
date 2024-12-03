@@ -128,6 +128,10 @@ async def chatroom_message(sid, data):
         return await socket_manager.emit(
             "error", {"message": "pubKey and timestamp are required"}, room=sid
         )
+    if not message_details.get("privKeyId") or not message_details.get("timestamp"):
+        return await socket_manager.emit(
+            "error", {"message": "pubKey and timestamp are required"}, room=sid
+        )
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
     if not chatroom:
         return await socket_manager.emit(
@@ -143,6 +147,7 @@ async def chatroom_message(sid, data):
         message=MessageDetails(
             content=message_details["content"],
             pubKey=message_details["pubKey"],
+            privKeyId=message_details["privKeyId"],
             timestamp=message_details["timestamp"]
         )
     )
@@ -160,6 +165,7 @@ async def chatroom_message(sid, data):
             "message": {
                 "content": message_details["content"],
                 "pubKey": message_details["pubKey"],
+                "privKeyId": message_details["privKeyId"],
                 "timestamp": message_details["timestamp"]
             }
         },
