@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from app.server.database import get_db
 from app.server.models.user import User, UserResponse, UserLogin, UserRegister
 from app.server.middleware.auth import authenticate_user
+from app.server.middleware.hash import hash_password, verify_password
 
 db = get_db()
 
@@ -52,10 +53,13 @@ async def create_user(new_user: UserRegister, response: Response):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User already exists!"
         )
+    
+    hash = hash_password(password)
 
     user_dict = {
         "username": username,
-        "password": password,
+        "password": hash["hashed_password"],
+        "salt": hash["salt"],
         "profile": {          
             "name": "",
             "about": "",
@@ -75,9 +79,15 @@ async def create_user(new_user: UserRegister, response: Response):
 @router.post("/login")
 async def login(user_login: UserLogin, response: Response):
 
-    user = await db["Users"].find_one({"username": user_login.username, "password": user_login.password})
+    user = await db["Users"].find_one({"username": user_login.username})
     
     if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email or Password is incorrect."
+        )
+    
+    if not verify_password(user_login.password, user["salt"], user["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or Password is incorrect."
