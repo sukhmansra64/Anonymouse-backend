@@ -106,7 +106,7 @@ async def login(user_login: UserLogin, response: Response):
         key="Authorization",
         value=token,
         httponly=True,
-        secure=True,
+        secure=False,
         max_age=900
     )
     
