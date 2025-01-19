@@ -21,12 +21,12 @@ SECRET_KEY = getenv("JWT_SECRET")
 ALGORITHM = getenv("JWT_ALGO")
 
 app = FastAPI()
-socket_manager = SocketManager(app=app, mount_location="/socket.io", cors_allowed_origins=["http://localhost:3000"], allow_credentials=True)
+socket_manager = SocketManager(app=app, mount_location="/socket.io", allow_credentials=True)
 db = get_db()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
