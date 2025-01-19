@@ -21,15 +21,15 @@ SECRET_KEY = getenv("JWT_SECRET")
 ALGORITHM = getenv("JWT_ALGO")
 
 app = FastAPI()
-socket_manager = SocketManager(app=app, mount_location="/socket.io", cors_allowed_origins=["http://localhost:3000"], allow_credentials=True)
+socket_manager = SocketManager(app=app, mount_location="/socket.io", cors_allowed_origins=[])
 db = get_db()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 app.include_router(UserRouter, tags=["User"],prefix="/api/user")
@@ -45,21 +45,14 @@ async def test_db(database=Depends(get_db)):
     collections = await database.list_collection_names()
     return {"collections": collections}
 
-#Socket.IO Events
+# Socket.IO Events
 @socket_manager.on("connect")
 async def connect(sid, environ):
-    cookies = environ.get("HTTP_COOKIE", "")
-    print(cookies)
-    cookie_dict = {cookie.split("=")[0]: cookie.split("=")[1] for cookie in cookies.split("; ") if "=" in cookie}
-
-    token = cookie_dict.get("Authorization")
-    if not token:
-        await socket_manager.disconnect(sid)
-        return
-    if not token or len(token.split(".")) != 3:
-            raise JWTError("Invalid token format")
-            
     try:
+        token = environ.get("HTTP_AUTHORIZATION", None)
+        if not token:
+            raise ConnectionRefusedError("No authorization token provided")
+        token = token.split("Bearer ")[-1]
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
         if not user_id:

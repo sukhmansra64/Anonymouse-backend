@@ -7,16 +7,16 @@ from app.server.middleware.auth import authenticate_user
 db = get_db()
 router = APIRouter()
 
-#@route GET api/message/test
-#@description Test messages route
-#@access Public
+# @route GET api/message/test
+# @description Test messages route
+# @access Public
 @router.get("/test")
 async def test():
     return "Messages route working."
 
-#@route GET api/message/{chatroom_id}
-#@description Get all messages in a chatroom
-#@access Protected
+# @route GET api/message/{chatroom_id}
+# @description Get all messages in a chatroom
+# @access Protected
 @router.get("/{chatroom_id}", response_model=list[Message])
 async def get_messages(
     chatroom_id: str, 
@@ -48,9 +48,9 @@ async def get_messages(
     response.status_code = status.HTTP_200_OK
     return messages
 
-#@route POST api/message
-#@description Send a message to a chatroom
-#@access Protected
+# @route POST api/message
+# @description Send a message to a chatroom
+# @access Protected
 @router.post("/", response_model=Message)
 async def send_message(
     message: SentMessage, 
