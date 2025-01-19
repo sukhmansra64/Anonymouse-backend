@@ -49,6 +49,7 @@ async def test_db(database=Depends(get_db)):
 @socket_manager.on("connect")
 async def connect(sid, environ):
     cookies = environ.get("HTTP_COOKIE", "")
+    print(cookies)
     cookie_dict = {cookie.split("=")[0]: cookie.split("=")[1] for cookie in cookies.split("; ") if "=" in cookie}
 
     token = cookie_dict.get("Authorization")
