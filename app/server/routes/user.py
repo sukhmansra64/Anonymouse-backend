@@ -112,7 +112,7 @@ async def login(user_login: UserLogin, response: Response):
     
     response.status_code = status.HTTP_200_OK
     return {
-        "message": f"{user['profile']['name']} has been logged in successfully."
+        "userId": str(user["_id"])
     }
 
 #@route GET api/user
