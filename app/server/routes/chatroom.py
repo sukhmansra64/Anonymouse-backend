@@ -9,16 +9,16 @@ from app.server.middleware.auth import authenticate_user
 db = get_db()
 router = APIRouter()
 
-# @route GET api/chatroom/test
-# @description Test chatroom route
-# @access Public
+#@route GET api/chatroom/test
+#@description Test chatroom route
+#@access Public
 @router.get("/test")
 async def test():
     return "Chatroom route works."
 
-# @route GET api/chatroom
-# @description Get all chatrooms the user is in
-# @access Protected
+#@route GET api/chatroom
+#@description Get all chatrooms the user is in
+#@access Protected
 @router.get("/", response_model=list[Chatroom])
 async def get_user_chatrooms(
     response: Response, 
@@ -38,9 +38,9 @@ async def get_user_chatrooms(
     return chatrooms
 
 
-# @route GET api/chatroom/{chatroom_id}
-# @description Get a chatroom by ID
-# @access Protected
+#@route GET api/chatroom/{chatroom_id}
+#@description Get a chatroom by ID
+#@access Protected
 @router.get("/{chatroom_id}", response_model=Chatroom)
 async def get_user_chatroom(
     chatroom_id: str, 
@@ -69,9 +69,9 @@ async def get_user_chatroom(
     return chatroom
 
 
-# @route POST api/chatroom
-# @description Create a new chatroom
-# @access Protected
+#@route POST api/chatroom
+#@description Create a new chatroom
+#@access Protected
 @router.post("/", response_model=Chatroom)
 async def create_chatroom(
     chatroom: SentChatroom, 
@@ -97,9 +97,9 @@ async def create_chatroom(
 
 
 
-# @route POST api/chatroom/{chatroom_id}/join
-# @description Add the authenticated user to the chatroom members list
-# @access Protected
+#@route POST api/chatroom/{chatroom_id}/join
+#@description Add the authenticated user to the chatroom members list
+#@access Protected
 @router.post("/{chatroom_id}/join", response_model=str)
 async def join_chatroom(
     chatroom_id: str, 
