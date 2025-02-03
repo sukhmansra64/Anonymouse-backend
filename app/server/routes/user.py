@@ -153,6 +153,30 @@ async def get_user(
     response.status_code = status.HTTP_200_OK
     return user
 
+#@route GET api/user/name/{userName}
+#@description Get Users by Username
+#@access Protected
+@router.get("/name/{userName}", response_model=list[UserResponse])
+async def getUserByName(userName: str, response: Response, payload:dict = Depends(authenticate_user)):
+    users = await db["Users"].find(
+        {"username": {"$regex": f"^{userName}", "$options": "i"}}
+    ).to_list(10)
+    if not users:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Username not found!"
+        )
+    for user in users:
+        if "dh_keys" in user and isinstance(user["dh_keys"], list):
+            user["dh_keys"] = [
+                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
+                if isinstance(k, str) and isinstance(v, str) 
+            ]
+    response.status_code = status.HTTP_200_OK
+    return users
+
+
+
 # @route PUT api/user
 # @description Update the authenticated user's information
 # @access Protected
