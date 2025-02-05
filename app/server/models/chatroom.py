@@ -31,7 +31,6 @@ class PyObjectId(ObjectId):
 class Chatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     name: str
-    description: Optional[str] = None
     members: List[PyObjectId] = []
     class Config:
         populate_by_name = True
@@ -49,7 +48,6 @@ class Chatroom(BaseModel):
 class SentChatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     name: str
-    description: Optional[str] = None
     members: List[PyObjectId]
 
 
