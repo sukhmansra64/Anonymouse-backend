@@ -14,8 +14,9 @@ router = APIRouter()
 async def test():
     return "Messages route working."
 
-# @route GET api/message/{chatroom_id}
-# @description Get all messages in a chatroom
+
+# @route GET api/message/chatroom_id
+# @description Get messages from chatroom
 # @access Protected
 @router.get("/{chatroom_id}", response_model=list[Message])
 async def get_messages(
@@ -32,21 +33,25 @@ async def get_messages(
             detail="Chatroom not found!"
         )
 
-    if ObjectId(user_id) not in chatroom.get("members", []):
+    if str(user_id) not in map(str, chatroom.get("members", [])):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to access this chatroom."
         )
 
     messages = await db["Messages"].find({"chatroom": ObjectId(chatroom_id)}).to_list(100)
+
     if not messages:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No messages found in this chatroom!"
-        )
+        return []
+
+    for message in messages:
+        message["_id"] = str(message["_id"])
+        message["chatroom"] = str(message["chatroom"])
+        message["sender"] = str(message["sender"])
 
     response.status_code = status.HTTP_200_OK
     return messages
+
 
 # @route POST api/message
 # @description Send a message to a chatroom
