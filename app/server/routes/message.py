@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from bson import ObjectId
 from app.server.database import get_db
-from app.server.models.message import Message, SentMessage, MessageDetails
+from app.server.models.message import Message, SentMessage, MessageDetails, ReadMessagesRequest
 from app.server.middleware.auth import authenticate_user
 from typing import List
 
@@ -111,7 +111,7 @@ async def send_message(
 #@access Protected
 @router.put("/read", response_model=dict)
 async def mark_messages_as_read_and_delete(
-    message_ids: List[str],
+    message_ids: ReadMessagesRequest,
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):

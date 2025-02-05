@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from bson import ObjectId
 from typing import Optional
 from pydantic.json_schema import JsonSchemaValue
+from typing import List
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -61,3 +62,7 @@ class Message(BaseModel):
 class SentMessage(BaseModel):
     chatroom: PyObjectId
     message: MessageDetails
+
+
+class ReadMessagesRequest(BaseModel):
+    message_ids: List[str]
