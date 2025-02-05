@@ -3,6 +3,7 @@ from bson import ObjectId
 from app.server.database import get_db
 from app.server.models.message import Message, SentMessage, MessageDetails
 from app.server.middleware.auth import authenticate_user
+from typing import List
 
 db = get_db()
 router = APIRouter()
@@ -110,7 +111,7 @@ async def send_message(
 #@access Protected
 @router.put("/read", response_model=dict)
 async def mark_messages_as_read_and_delete(
-    message_ids: list[str],
+    message_ids: List[str],
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):
