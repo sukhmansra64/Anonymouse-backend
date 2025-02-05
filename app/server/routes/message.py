@@ -105,47 +105,54 @@ async def send_message(
         )
     )
 
-#@route PUT api/message/read/{message_id}
+#@route PUT api/message/read/
 #@description Mark message as read
 #@access Protected
-@router.put("/message/read/{message_id}")
-async def mark_message_as_read(
-    message_id: str,
+@router.put("/read", response_model=dict)
+async def mark_messages_as_read_and_delete(
+    message_ids: list[str],
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):
-    user_id = payload.get("user_id")
+    user_id = payload["user_id"]
 
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload."
-        )
+    try:
+        object_ids = [ObjectId(msg_id) for msg_id in message_ids]
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid message ID format.")
 
-    message = await db["Messages"].find_one({"_id": ObjectId(message_id)})
-    if not message:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Message not found!"
-        )
-
-    chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(message["chatroom_id"])})
-    if not chatroom:
+    messages = await db["Messages"].find({"_id": {"$in": object_ids}}).to_list(len(object_ids))
+    
+    if not messages:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Chatroom not found!"
+            detail="No messages found!"
         )
-    chat_members = chatroom.get("members", [])
 
-    await db["Messages"].update_one(
-        {"_id": ObjectId(message_id)},
-        {"$addToSet": {"readBy": user_id}}
-    )
+    messages_to_delete = []
+    
+    for message in messages:
+        chatroom = await db["Chatrooms"].find_one({"_id": message["chatroom"]})
+        if not chatroom:
+            continue
 
-    updated_message = await db["Messages"].find_one({"_id": ObjectId(message_id)})
-    if set(updated_message["readBy"]) == set(str(m) for m in chat_members):
-        await db["Messages"].delete_one({"_id": ObjectId(message_id)})
+        chatroom_members = set(map(str, chatroom.get("members", [])))
+        read_by_users = set(map(str, message.get("readBy", [])))
+
+        if str(user_id) not in read_by_users:
+            await db["Messages"].update_one(
+                {"_id": message["_id"]},
+                {"$addToSet": {"readBy": str(user_id)}}
+            )
+            read_by_users.add(str(user_id))
+
+        if chatroom_members == read_by_users:
+            messages_to_delete.append(message["_id"])
+
+    if messages_to_delete:
+        await db["Messages"].delete_many({"_id": {"$in": messages_to_delete}})
 
     response.status_code = status.HTTP_200_OK
-    return {"message": "Message marked as read"}
-
+    return {
+        "message": "Messages read."
+    }
