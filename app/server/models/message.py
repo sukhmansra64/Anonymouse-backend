@@ -30,7 +30,6 @@ class MessageDetails(BaseModel):
     pubKey: str
     privKeyId: str
     timestamp: str
-    readBy: list[str] = []
 
 
 class Message(BaseModel):
@@ -38,7 +37,7 @@ class Message(BaseModel):
     chatroom: PyObjectId
     sender: PyObjectId
     message: MessageDetails
-    read_by: list[str] = []
+    readBy: list[str] = []
 
     class Config:
         populate_by_name = True
@@ -54,7 +53,8 @@ class Message(BaseModel):
                     "pubKey": "public_key_example",
                     "privKeyId": "private_key_example",
                     "timestamp": "2024-12-02T12:00:00"
-                }
+                },
+                "readBy" : []
             }
         }
 
