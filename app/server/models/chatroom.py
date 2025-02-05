@@ -50,5 +50,6 @@ class SentChatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     name: str
     description: Optional[str] = None
+    members: List[PyObjectId]
 
 
