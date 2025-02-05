@@ -30,6 +30,7 @@ class MessageDetails(BaseModel):
     pubKey: str
     privKeyId: str
     timestamp: str
+    read_by: list[str] = []
 
 
 class Message(BaseModel):
@@ -37,6 +38,7 @@ class Message(BaseModel):
     chatroom: PyObjectId
     sender: PyObjectId
     message: MessageDetails
+    read_by: list[str] = []
 
     class Config:
         populate_by_name = True
