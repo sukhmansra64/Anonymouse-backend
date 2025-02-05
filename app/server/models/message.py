@@ -30,7 +30,7 @@ class MessageDetails(BaseModel):
     pubKey: str
     privKeyId: str
     timestamp: str
-    read_by: list[str] = []
+    readBy: list[str] = []
 
 
 class Message(BaseModel):
