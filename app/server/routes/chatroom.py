@@ -69,9 +69,9 @@ async def get_user_chatroom(
     return chatroom
 
 
-# @route POST api/chatroom
-# @description Create a new chatroom
-# @access Protected
+#@route POST api/chatroom
+#@description Create a new chatroom
+#@access Protected
 @router.post("/", response_model=Chatroom)
 async def create_chatroom(
     chatroom: SentChatroom, 
@@ -87,13 +87,20 @@ async def create_chatroom(
         )
 
     chatroom_dict = chatroom.dict(by_alias=True)
-    chatroom_dict["members"] = [ObjectId(user_id)]
+    chatroom_dict["members"] = sorted([ObjectId(user_id)] + [ObjectId(m) for m in chatroom_dict.get("members", [])])
+
+    existing_chatroom = await db["Chatrooms"].find_one({"members": chatroom_dict["members"]})
+
+    if existing_chatroom:
+        response.status_code = status.HTTP_200_OK
+        return existing_chatroom
 
     result = await db["Chatrooms"].insert_one(chatroom_dict)
     chatroom_dict["_id"] = str(result.inserted_id)
 
-    response.status_code = status.HTTP_200_OK
+    response.status_code = status.HTTP_201_CREATED
     return chatroom_dict
+
 
 
 
