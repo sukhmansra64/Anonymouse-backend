@@ -118,7 +118,7 @@ async def mark_messages_as_read_and_delete(
     user_id = payload["user_id"]
 
     try:
-        object_ids = [ObjectId(msg_id) for msg_id in message_ids]
+        object_ids = [ObjectId(msg_id) for msg_id in message_ids.message_ids]
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid message ID format.")
 
