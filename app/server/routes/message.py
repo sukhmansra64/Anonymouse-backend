@@ -104,3 +104,48 @@ async def send_message(
             timestamp=message_dict["message"]["timestamp"]
         )
     )
+
+#@route PUT api/message/read/{message_id}
+#@description Mark message as read
+#@access Protected
+@router.put("/message/read/{message_id}")
+async def mark_message_as_read(
+    message_id: str,
+    response: Response,
+    payload: dict = Depends(authenticate_user)
+):
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload."
+        )
+
+    message = await db["Messages"].find_one({"_id": ObjectId(message_id)})
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found!"
+        )
+
+    chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(message["chatroom_id"])})
+    if not chatroom:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chatroom not found!"
+        )
+    chat_members = chatroom.get("members", [])
+
+    await db["Messages"].update_one(
+        {"_id": ObjectId(message_id)},
+        {"$addToSet": {"readBy": user_id}}
+    )
+
+    updated_message = await db["Messages"].find_one({"_id": ObjectId(message_id)})
+    if set(updated_message["readBy"]) == set(str(m) for m in chat_members):
+        await db["Messages"].delete_one({"_id": ObjectId(message_id)})
+
+    response.status_code = status.HTTP_200_OK
+    return {"message": "Message marked as read"}
+
