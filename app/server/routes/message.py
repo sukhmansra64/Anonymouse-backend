@@ -39,19 +39,22 @@ async def get_messages(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to access this chatroom."
         )
+    
+    unread_messages = await db["Messages"].find({
+        "chatroom": ObjectId(chatroom_id),
+        "readBy": {"$ne": user_id}  # Exclude messages where user_id is in readBy
+    }).to_list(100)
 
-    messages = await db["Messages"].find({"chatroom": ObjectId(chatroom_id)}).to_list(100)
-
-    if not messages:
+    if not unread_messages:
         return []
 
-    for message in messages:
+    for message in unread_messages:
         message["_id"] = str(message["_id"])
         message["chatroom"] = str(message["chatroom"])
         message["sender"] = str(message["sender"])
 
     response.status_code = status.HTTP_200_OK
-    return messages
+    return unread_messages
 
 
 # @route POST api/message
