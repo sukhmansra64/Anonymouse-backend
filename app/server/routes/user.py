@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 
 from app.server.database import get_db
-from app.server.models.user import User, UserResponse, UserLogin, UserRegister
+from app.server.models.user import User, UserResponse, UserLogin, UserRegister, ChangePasswordRequest
 from app.server.middleware.auth import authenticate_user
 from app.server.middleware.hash import hash_password, verify_password
 
@@ -316,5 +316,59 @@ async def pop_dh_key(
 
     response.status_code = status.HTTP_200_OK
     return {"popped_key": popped_key}
+
+#@route POST api/user/change-password
+#@description Change user password
+#@access Protected
+@router.post("/change-password", response_model=str)
+async def change_password(
+    request: ChangePasswordRequest,
+    response: Response,
+    payload: dict = Depends(authenticate_user)
+):
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload."
+        )
+
+    current_password = request.currentPassword
+    new_password = request.newPassword
+
+    if not current_password or not new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both current and new passwords are required."
+        )
+
+    user = await db["Users"].find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found!"
+        )
+
+    if not verify_password(current_password, user["salt"], user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect."
+        )
+    
+    new_hashed_password = hash_password(new_password)
+
+    await db["Users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "password": new_hashed_password["hashed_password"],
+            "salt": new_hashed_password["salt"]
+        }}
+    )
+
+    response.status_code = status.HTTP_200_OK
+    return "Password changed."
+
 
 
