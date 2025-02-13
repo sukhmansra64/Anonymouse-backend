@@ -158,8 +158,12 @@ async def get_user(
 #@access Protected
 @router.get("/name/{userName}", response_model=list[UserResponse])
 async def getUserByName(userName: str, response: Response, payload:dict = Depends(authenticate_user)):
+    user_id = payload["user_id"]
     users = await db["Users"].find(
-        {"username": {"$regex": f"^{userName}", "$options": "i"}}
+        {
+            "username": {"$regex": f"^{userName}", "$options": "i"},
+            "_id": {"$ne": ObjectId(user_id)}  # Exclude the current user
+        }
     ).to_list(10)
     if not users:
         raise HTTPException(
