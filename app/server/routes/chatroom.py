@@ -19,7 +19,7 @@ async def test():
 #@route GET api/chatroom
 #@description Get all chatrooms the user is in
 #@access Protected
-@router.get("/", response_model=list[Chatroom])
+@router.get("/", response_model=list[dict])
 async def get_user_chatrooms(
     response: Response, 
     payload: dict = Depends(authenticate_user)
@@ -49,7 +49,7 @@ async def get_user_chatrooms(
 #@route GET api/chatroom/{chatroom_id}
 #@description Get a chatroom by ID
 #@access Protected
-@router.get("/{chatroom_id}", response_model=Chatroom)
+@router.get("/{chatroom_id}", response_model=dict)
 async def get_user_chatroom(
     chatroom_id: str, 
     response: Response, 
@@ -84,7 +84,7 @@ async def get_user_chatroom(
 #@route POST api/chatroom
 #@description Create a new chatroom
 #@access Protected
-@router.post("/", response_model=Chatroom)
+@router.post("/", response_model=dict)
 async def create_chatroom(
     chatroom: SentChatroom, 
     response: Response, 
