@@ -166,6 +166,49 @@ async def join_chatroom(
     response.status_code = status.HTTP_200_OK
     return f"User {user_id} successfully added to chatroom {chatroom_id}!"
 
+#@route DELETE api/chatroom/{chatroom_id}
+#@description Delete a chatroom and it's messages
+#@access Protected
+@router.delete("/{chatroom_id}", response_model=str)
+async def delete_chatroom(
+    chatroom_id: str, 
+    response: Response, 
+    payload: dict = Depends(authenticate_user)
+):
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload."
+        )
+
+    chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
+    if not chatroom:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chatroom not found."
+        )
+
+    if ObjectId(user_id) not in chatroom["members"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this chatroom."
+        )
+
+    await db["Messages"].delete_many({"chatroom": ObjectId(chatroom_id)})
+
+    delete_result = await db["Chatrooms"].delete_one({"_id": ObjectId(chatroom_id)})
+
+    if delete_result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete chatroom."
+        )
+
+    response.status_code = status.HTTP_200_OK
+    return f"Chatroom {chatroom_id} successfully deleted."
+
 
 async def generate_chatroom_name(member_ids, current_user_id):
     other_members = await db["Users"].find(
@@ -173,3 +216,4 @@ async def generate_chatroom_name(member_ids, current_user_id):
     ).to_list(None)
 
     return ", ".join([user["username"] for user in other_members])
+
