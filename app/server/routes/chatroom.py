@@ -9,16 +9,16 @@ from app.server.middleware.auth import authenticate_user
 db = get_db()
 router = APIRouter()
 
-# @route GET api/chatroom/test
-# @description Test chatroom route
-# @access Public
+#@route GET api/chatroom/test
+#@description Test chatroom route
+#@access Public
 @router.get("/test")
 async def test():
     return "Chatroom route works."
 
-# @route GET api/chatroom
-# @description Get all chatrooms the user is in
-# @access Protected
+#@route GET api/chatroom
+#@description Get all chatrooms the user is in
+#@access Protected
 @router.get("/", response_model=list[Chatroom])
 async def get_user_chatrooms(
     response: Response, 
@@ -32,15 +32,23 @@ async def get_user_chatrooms(
             detail="Invalid token payload."
         )
 
-    chatrooms = await db["Chatrooms"].find({"members": ObjectId(user_id)}).to_list()
+    chatrooms = await db["Chatrooms"].find({"members": ObjectId(user_id)}).to_list(None)
+
+    formatted_chatrooms = []
+    for chatroom in chatrooms:
+        formatted_chatrooms.append({
+            "_id": str(chatroom["_id"]),
+            "name": await generate_chatroom_name(chatroom["members"], user_id),
+            "members": [str(member) for member in chatroom["members"]]
+        })
 
     response.status_code = status.HTTP_200_OK
-    return chatrooms
+    return formatted_chatrooms
 
 
-# @route GET api/chatroom/{chatroom_id}
-# @description Get a chatroom by ID
-# @access Protected
+#@route GET api/chatroom/{chatroom_id}
+#@description Get a chatroom by ID
+#@access Protected
 @router.get("/{chatroom_id}", response_model=Chatroom)
 async def get_user_chatroom(
     chatroom_id: str, 
@@ -66,7 +74,11 @@ async def get_user_chatroom(
         )
 
     response.status_code = status.HTTP_200_OK
-    return chatroom
+    return {
+        "_id": str(chatroom["_id"]),
+        "name": await generate_chatroom_name(chatroom["members"], user_id),
+        "members": [str(member) for member in chatroom["members"]]
+    }
 
 
 #@route POST api/chatroom
@@ -93,10 +105,16 @@ async def create_chatroom(
 
     if existing_chatroom:
         response.status_code = status.HTTP_200_OK
-        return existing_chatroom
+        return {
+            "_id": str(existing_chatroom["_id"]),
+            "name": await generate_chatroom_name(existing_chatroom["members"], user_id),
+            "members": [str(member) for member in existing_chatroom["members"]]
+        }
 
     result = await db["Chatrooms"].insert_one(chatroom_dict)
     chatroom_dict["_id"] = str(result.inserted_id)
+
+    chatroom_dict["name"] = await generate_chatroom_name(chatroom_dict["members"], user_id)
 
     response.status_code = status.HTTP_201_CREATED
     return chatroom_dict
@@ -104,9 +122,9 @@ async def create_chatroom(
 
 
 
-# @route POST api/chatroom/{chatroom_id}/join
-# @description Add the authenticated user to the chatroom members list
-# @access Protected
+#@route POST api/chatroom/{chatroom_id}/join
+#@description Add the authenticated user to the chatroom members list
+#@access Protected
 @router.post("/{chatroom_id}/join", response_model=str)
 async def join_chatroom(
     chatroom_id: str, 
@@ -148,3 +166,10 @@ async def join_chatroom(
     response.status_code = status.HTTP_200_OK
     return f"User {user_id} successfully added to chatroom {chatroom_id}!"
 
+
+async def generate_chatroom_name(member_ids, current_user_id):
+    other_members = await db["Users"].find(
+        {"_id": {"$in": [member for member in member_ids if str(member) != str(current_user_id)]}}
+    ).to_list(None)
+
+    return ", ".join([user["username"] for user in other_members])

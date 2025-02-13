@@ -30,7 +30,6 @@ class PyObjectId(ObjectId):
 
 class Chatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    name: str
     members: List[PyObjectId] = []
     class Config:
         populate_by_name = True
@@ -39,7 +38,6 @@ class Chatroom(BaseModel):
         json_schema_extra = {
             "example": {
                 "_id": "507f191e810c19729de860ea",
-                "name": "General",
                 "description": "A chatroom for general discussions",
                 "members": ["507f191e810c19729de860ea", "507f191e810c19729de860eb"]
             }
@@ -47,7 +45,6 @@ class Chatroom(BaseModel):
 
 class SentChatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    name: str
     members: List[PyObjectId]
 
 
