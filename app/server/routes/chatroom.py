@@ -98,9 +98,12 @@ async def create_chatroom(
             detail="Invalid token payload."
         )
 
-    member_ids = sorted([ObjectId(user_id)] + [ObjectId(m) for m in chatroom.members if m != user_id])
+    chatroom_dict = chatroom.dict(by_alias=True)
+    chatroom_dict["members"] = sorted(
+        [ObjectId(user_id)] + [ObjectId(m) for m in chatroom_dict.get("members", [])]
+    )
 
-    existing_chatroom = await db["Chatrooms"].find_one({"members": member_ids})
+    existing_chatroom = await db["Chatrooms"].find_one({"members": chatroom_dict["members"]})
 
     if existing_chatroom:
         response.status_code = status.HTTP_200_OK
@@ -110,17 +113,14 @@ async def create_chatroom(
             "members": [str(member) for member in existing_chatroom["members"]]
         }
 
-    new_chatroom = {
-        "members": member_ids
-    }
+    result = await db["Chatrooms"].insert_one(chatroom_dict)
+    chatroom_dict["_id"] = str(result.inserted_id)
 
-    result = await db["Chatrooms"].insert_one(new_chatroom)
-    new_chatroom["_id"] = str(result.inserted_id)
-
-    new_chatroom["name"] = await generate_chatroom_name(new_chatroom["members"], user_id)
+    chatroom_dict["name"] = await generate_chatroom_name(chatroom_dict["members"], user_id)
+    chatroom_dict["members"] = [str(member) for member in chatroom_dict["members"]]
 
     response.status_code = status.HTTP_201_CREATED
-    return new_chatroom
+    return chatroom_dict
 
 
 
