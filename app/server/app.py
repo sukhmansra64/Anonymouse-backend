@@ -14,14 +14,13 @@ from app.server.database import get_db
 
 from app.server.models.chatroom import Chatroom
 from app.server.models.message import Message, MessageDetails
+from app.server.middleware.socket import app,socket_manager
 
 load_dotenv()
 
 SECRET_KEY = getenv("JWT_SECRET")
 ALGORITHM = getenv("JWT_ALGO")
 
-app = FastAPI()
-socket_manager = SocketManager(app=app, mount_location="/socket.io", cors_allowed_origins=[])
 db = get_db()
 
 app.add_middleware(

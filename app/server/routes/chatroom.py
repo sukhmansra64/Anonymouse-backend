@@ -5,7 +5,7 @@ from bson import ObjectId
 from app.server.database import get_db
 from app.server.models.chatroom import Chatroom, SentChatroom
 from app.server.middleware.auth import authenticate_user
-from app.server.app import socket_manager
+from app.server.middleware.socket import socket_manager
 
 db = get_db()
 router = APIRouter()
