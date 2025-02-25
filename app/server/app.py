@@ -58,6 +58,8 @@ async def connect(sid, environ):
         if not user_id:
             raise ConnectionRefusedError("Invalid token payload")
         await socket_manager.save_session(sid, {"user_id": user_id})
+        await socket_manager.enter_room(sid, user_id)
+
         print(f"User {user_id} connected via socket: {sid}")
     except (JWTError, ConnectionRefusedError) as e:
         print(f"Connection refused: {e}")

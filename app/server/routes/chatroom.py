@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.server.database import get_db
 from app.server.models.chatroom import Chatroom, SentChatroom
 from app.server.middleware.auth import authenticate_user
+from app.server.app import socket_manager
 
 db = get_db()
 router = APIRouter()
@@ -119,6 +120,10 @@ async def create_chatroom(
     chatroom_dict["name"] = await generate_chatroom_name(chatroom_dict["members"], user_id)
     chatroom_dict["members"] = [str(member) for member in chatroom_dict["members"]]
 
+    for member in chatroom_dict["members"]:
+        if member != user_id:  # Don't notify the creator
+            await socket_manager.emit("newChatroom", chatroom_dict, room=member)
+
     response.status_code = status.HTTP_201_CREATED
     return chatroom_dict
 
@@ -208,6 +213,13 @@ async def delete_chatroom(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete chatroom."
         )
+    
+    await socket_manager.emit(
+        "chatroomDeleted",
+        {"message": f"{chatroom_id}"},
+        room=chatroom_id
+    )
+
 
     response.status_code = status.HTTP_200_OK
     return f"Chatroom {chatroom_id} successfully deleted."
