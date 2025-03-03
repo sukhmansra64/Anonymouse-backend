@@ -121,8 +121,14 @@ async def create_chatroom(
     chatroom_dict["members"] = [str(member) for member in chatroom_dict["members"]]
 
     for member in chatroom_dict["members"]:
-        if member != user_id:  # Don't notify the creator
-            await socket_manager.emit("newChatroom", chatroom_dict, room=member)
+        member_chatroom_name = await generate_chatroom_name(chatroom_dict["members"], member)
+        chatroom_data = {
+            "_id": chatroom_dict["_id"],
+            "name": member_chatroom_name,
+            "members": chatroom_dict["members"]
+        }
+        if member != user_id:
+            await socket_manager.emit("newChatroom", chatroom_data, room=member)
 
     response.status_code = status.HTTP_201_CREATED
     return chatroom_dict
