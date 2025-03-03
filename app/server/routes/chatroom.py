@@ -121,7 +121,7 @@ async def create_chatroom(
     chatroom_dict["members"] = [str(member) for member in chatroom_dict["members"]]
 
     for member in chatroom_dict["members"]:
-        member_chatroom_name = await generate_chatroom_name(chatroom_dict["members"], member)
+        member_chatroom_name = await generate_chatroom_name(chatroom_dict["members"], user_id)
         chatroom_data = {
             "_id": chatroom_dict["_id"],
             "name": member_chatroom_name,
