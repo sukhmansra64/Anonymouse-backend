@@ -233,9 +233,23 @@ async def delete_chatroom(
 
 
 async def generate_chatroom_name(member_ids, current_user_id):
+    print(f"🔹 Members before filtering: {member_ids}")
+    print(f"🔹 Current user ID: {current_user_id}")
+
+    # Convert members to ObjectId, except the current user
+    other_members_ids = [ObjectId(member) for member in member_ids if str(member) != str(current_user_id)]
+    
+    print(f"🔹 Members after filtering: {other_members_ids}")  # Debugging print
+
     other_members = await db["Users"].find(
-        {"_id": {"$in": [member for member in member_ids if str(member) != str(current_user_id)]}}
+        {"_id": {"$in": other_members_ids}}
     ).to_list(None)
 
-    return ", ".join([user["username"] for user in other_members])
+    print(f"🔹 Fetched Members: {other_members}")  # Debugging print
+
+    chatroom_name = ", ".join([user.get("username", "Unknown") for user in other_members])
+
+    print(f"✅ Generated Chatroom Name: {chatroom_name}")  # Debugging print
+
+    return chatroom_name if chatroom_name else "Unnamed Chatroom"
 
