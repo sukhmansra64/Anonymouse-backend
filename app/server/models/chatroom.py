@@ -31,6 +31,7 @@ class PyObjectId(ObjectId):
 class Chatroom(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     members: List[PyObjectId] = []
+    firstMessage: bool = False  
     class Config:
         populate_by_name = True
         arbitrary_types_allowed = True
@@ -39,7 +40,8 @@ class Chatroom(BaseModel):
             "example": {
                 "_id": "507f191e810c19729de860ea",
                 "description": "A chatroom for general discussions",
-                "members": ["507f191e810c19729de860ea", "507f191e810c19729de860eb"]
+                "members": ["507f191e810c19729de860ea", "507f191e810c19729de860eb"],
+                "firstMessage": False
             }
         }
 

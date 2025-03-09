@@ -6,6 +6,7 @@ from app.server.database import get_db
 from app.server.models.chatroom import Chatroom, SentChatroom
 from app.server.middleware.auth import authenticate_user
 from app.server.middleware.socket import socket_manager
+from app.server.middleware.utils import generate_chatroom_name
 
 db = get_db()
 router = APIRouter()
@@ -33,7 +34,10 @@ async def get_user_chatrooms(
             detail="Invalid token payload."
         )
 
-    chatrooms = await db["Chatrooms"].find({"members": ObjectId(user_id)}).to_list(None)
+    chatrooms = await db["Chatrooms"].find({
+        "members": ObjectId(user_id),
+        "firstMessage": True
+    }).to_list(None)
 
     formatted_chatrooms = []
     for chatroom in chatrooms:
@@ -113,6 +117,8 @@ async def create_chatroom(
             "name": await generate_chatroom_name(existing_chatroom["members"], user_id),
             "members": [str(member) for member in existing_chatroom["members"]]
         }
+    
+    chatroom_dict["firstMessage"] = False
 
     result = await db["Chatrooms"].insert_one(chatroom_dict)
     chatroom_dict["_id"] = str(result.inserted_id)
@@ -127,8 +133,6 @@ async def create_chatroom(
             "name": member_chatroom_name,
             "members": chatroom_dict["members"]
         }
-        if member != user_id:
-            await socket_manager.emit("newChatroom", chatroom_data, room=member)
 
     response.status_code = status.HTTP_201_CREATED
     return chatroom_dict
@@ -230,14 +234,4 @@ async def delete_chatroom(
     response.status_code = status.HTTP_200_OK
     return f"Chatroom {chatroom_id} successfully deleted."
 
-
-async def generate_chatroom_name(member_ids, current_user_id):
-    other_members_ids = [ObjectId(member) for member in member_ids if str(member) != str(current_user_id)]
-    other_members = await db["Users"].find(
-        {"_id": {"$in": other_members_ids}}
-    ).to_list(None)
-
-    chatroom_name = ", ".join([user.get("username", "Unknown") for user in other_members])
-
-    return chatroom_name if chatroom_name else "Unnamed Chatroom"
 

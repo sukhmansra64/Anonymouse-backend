@@ -15,6 +15,7 @@ from app.server.database import get_db
 from app.server.models.chatroom import Chatroom
 from app.server.models.message import Message, MessageDetails
 from app.server.middleware.socket import app,socket_manager
+from app.server.middleware.utils import generate_chatroom_name
 
 load_dotenv()
 
@@ -172,3 +173,19 @@ async def chatroom_message(sid, data):
         },
         room=chatroom_id,
     )
+
+    if not chatroom.get("firstMessage", False):
+        await db["Chatrooms"].update_one(
+            {"_id": chatroom["_id"]},
+            {"$set": {"firstMessage": True}}
+        )
+
+        for member in chatroom["members"]:
+            if str(member) != str(user_id):
+                member_chatroom_name = await generate_chatroom_name(chatroom["members"], member)
+                new_chatroom_data = {
+                    "_id": str(chatroom["_id"]),
+                    "name": member_chatroom_name,
+                    "members": [str(mem) for mem in chatroom["members"]]
+                }
+                await socket_manager.emit("newChatroom", new_chatroom_data, room=member)
