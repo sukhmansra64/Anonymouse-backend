@@ -227,7 +227,7 @@ async def delete_chatroom(
     await socket_manager.emit(
         "chatroomDeleted",
         {"message": f"{chatroom_id}"},
-        room=chatroom_id
+        room=str(chatroom_id)
     )
 
 
