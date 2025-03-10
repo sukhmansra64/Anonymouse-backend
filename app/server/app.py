@@ -181,7 +181,7 @@ async def chatroom_message(sid, data):
     )
 
     if not chatroom.get("firstMessage", False):
-        print()
+        print("Sending to users in chatroom")
         await db["Chatrooms"].update_one(
             {"_id": chatroom["_id"]},
             {"$set": {"firstMessage": True}}
