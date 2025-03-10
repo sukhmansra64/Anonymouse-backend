@@ -196,4 +196,4 @@ async def chatroom_message(sid, data):
                     "members": [str(mem) for mem in chatroom["members"]]
                 }
                 print(new_chatroom_data)
-                await socket_manager.emit("newChatroom", new_chatroom_data, room=member)
+                await socket_manager.emit("newChatroom", new_chatroom_data, room=str(member))
