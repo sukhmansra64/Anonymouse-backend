@@ -14,5 +14,7 @@ async def generate_chatroom_name(member_ids, current_user_id):
 
     chatroom_name = ", ".join([user.get("username", "Unknown") for user in other_members])
 
+    print(chatroom_name)
+
     return chatroom_name if chatroom_name else "Unnamed Chatroom"
 
