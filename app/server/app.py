@@ -174,7 +174,7 @@ async def chatroom_message(sid, data):
         room=chatroom_id,
     )
 
-    if not chatroom.get("firstMessage", False):
+    if chatroom.get("firstMessage", False):
         await db["Chatrooms"].update_one(
             {"_id": chatroom["_id"]},
             {"$set": {"firstMessage": True}}
