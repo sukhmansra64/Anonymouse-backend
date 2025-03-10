@@ -60,6 +60,12 @@ async def connect(sid, environ):
         await socket_manager.save_session(sid, {"user_id": user_id})
         await socket_manager.enter_room(sid, user_id)
 
+        await socket_manager.emit(
+            "joinedUserRoom", 
+            {"roomId": user_id}, 
+            to=sid
+        )
+
         print(f"User {user_id} connected via socket: {sid}")
     except (JWTError, ConnectionRefusedError) as e:
         print(f"Connection refused: {e}")
@@ -174,7 +180,8 @@ async def chatroom_message(sid, data):
         room=chatroom_id,
     )
 
-    if chatroom.get("firstMessage", False):
+    if not chatroom.get("firstMessage", False):
+        print()
         await db["Chatrooms"].update_one(
             {"_id": chatroom["_id"]},
             {"$set": {"firstMessage": True}}
