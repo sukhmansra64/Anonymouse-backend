@@ -208,7 +208,7 @@ async def delete_chatroom(
             detail="Chatroom not found."
         )
     
-    deleted_id = chatroom._id
+    deleted_id = chatroom["_id"]
     members = list(chatroom["members"])
 
     if ObjectId(user_id) not in chatroom["members"]:
@@ -231,7 +231,7 @@ async def delete_chatroom(
         await socket_manager.emit(
             "chatroomDeleted",
             {"message": f"{deleted_id}"},
-            room=str(member)  # Emit directly to each user ID room
+            room=str(member) 
         )
 
 
