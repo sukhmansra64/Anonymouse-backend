@@ -63,7 +63,7 @@ async def connect(sid, environ):
         await socket_manager.emit(
             "joinedUserRoom", 
             {"roomId": user_id}, 
-            to=user_id
+            room=user_id
         )
 
         print(f"User {user_id} connected via socket: {sid}")
