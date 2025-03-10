@@ -57,13 +57,13 @@ async def connect(sid, environ):
         user_id = payload.get("user_id")
         if not user_id:
             raise ConnectionRefusedError("Invalid token payload")
-        await socket_manager.save_session(sid, {"user_id": user_id})
-        await socket_manager.enter_room(sid, user_id)
+        await socket_manager.save_session(sid, {"user_id": str(user_id)})
+        await socket_manager.enter_room(sid, str(user_id))
 
         await socket_manager.emit(
             "joinedUserRoom", 
             {"roomId": user_id}, 
-            room=user_id
+            room=str(user_id)
         )
 
         print(f"User {user_id} connected via socket: {sid}")
@@ -98,7 +98,7 @@ async def join_room(sid, data):
     await socket_manager.emit(
         "notification",
         {"message": f"User {user_id} joined the chatroom"},
-        room=chatroom_id,
+        room=str(chatroom_id),
     )
 
 
@@ -110,7 +110,7 @@ async def leave_room(sid, data):
     await socket_manager.emit(
         "notification",
         {"message": f"User left chatroom {chatroom_id}"},
-        room=chatroom_id,
+        room=str(chatroom_id)
     )
 
 
