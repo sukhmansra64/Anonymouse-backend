@@ -207,6 +207,9 @@ async def delete_chatroom(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chatroom not found."
         )
+    
+    deleted_id = chatroom._id
+    members = list(chatroom["members"])
 
     if ObjectId(user_id) not in chatroom["members"]:
         raise HTTPException(
@@ -224,11 +227,13 @@ async def delete_chatroom(
             detail="Failed to delete chatroom."
         )
     
-    await socket_manager.emit(
-        "chatroomDeleted",
-        {"message": f"{chatroom_id}"},
-        room=str(chatroom_id)
-    )
+    for member in members:
+        await socket_manager.emit(
+            "chatroomDeleted",
+            {"message": f"{deleted_id}"},
+            room=str(member)  # Emit directly to each user ID room
+        )
+
 
 
     response.status_code = status.HTTP_200_OK
