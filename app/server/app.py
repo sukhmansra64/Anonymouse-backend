@@ -66,6 +66,8 @@ async def connect(sid, environ):
             room=user_id
         )
 
+        print("Rooms:", socket_manager.rooms(sid))
+
         print(f"User {user_id} connected via socket: {sid}")
     except (JWTError, ConnectionRefusedError) as e:
         print(f"Connection refused: {e}")
