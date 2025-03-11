@@ -132,14 +132,11 @@ async def chatroom_message(sid, data):
         return await socket_manager.emit(
             "error", {"message": "Message content cannot be empty"}, room=sid
         )
-    if not message_details.get("pubKey") or not message_details.get("timestamp"):
+    if not message_details.get("DHKey") or not message_details.get("timestamp"):
         return await socket_manager.emit(
-            "error", {"message": "pubKey and timestamp are required"}, room=sid
+            "error", {"message": "DHKey and timestamp are required"}, room=sid
         )
-    if not message_details.get("privKeyId") or not message_details.get("timestamp"):
-        return await socket_manager.emit(
-            "error", {"message": "pubKey and timestamp are required"}, room=sid
-        )
+    
     chatroom = await db["Chatrooms"].find_one({"_id": ObjectId(chatroom_id)})
     if not chatroom:
         return await socket_manager.emit(
@@ -153,10 +150,11 @@ async def chatroom_message(sid, data):
         chatroom=chatroom_id,
         sender=user_id,
         message=MessageDetails(
-            content=message_details["content"],
-            pubKey=message_details["pubKey"],
-            privKeyId=message_details["privKeyId"],
-            timestamp=message_details["timestamp"]
+            content=message_details["message"]["content"],
+            DHKey=message_details["message"]["DHKey"],
+            ephKey=message_details["message"]["ephKey"] if "ephKey" in message_details["message"] else "",
+            otpID=message_details["message"]["otpID"] if "otpKey" in message_details["message"] else "",
+            timestamp=message_details["message"]["timestamp"]
         )
     )
     result = await db["Messages"].insert_one(message.dict(by_alias=True))
@@ -172,8 +170,9 @@ async def chatroom_message(sid, data):
             "sender": user_id,
             "message": {
                 "content": message_details["content"],
-                "pubKey": message_details["pubKey"],
-                "privKeyId": message_details["privKeyId"],
+                "DHKey": message_details["DHKey"],
+                "ephKey": message_details["ephKey"] if "ephKey" in message_details else "",
+                "otpID": message_details["otpID"] if "otpID" in message_details else "",
                 "timestamp": message_details["timestamp"]
             }
         },

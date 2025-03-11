@@ -63,7 +63,7 @@ async def create_user(new_user: UserRegister, response: Response):
         "identityKey": new_user.identityKey,
         "schnorrKey": new_user.schnorrKey,
         "schnorrSig": new_user.schnorrSig,
-        "otpKeys": []
+        "otpKeys": new_user.otpKeys if "otpKeys" in new_user else []
     }
 
     result = await db["Users"].insert_one(user_dict)
