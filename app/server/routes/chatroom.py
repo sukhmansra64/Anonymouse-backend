@@ -245,7 +245,7 @@ async def delete_chatroom(
 @router.get("/{otherUserID}/{isSend}", response_model=dict)
 async def get_user_crypto_info(
     otherUserID: str,
-    isSend: bool,
+    isSend: str,
     response: Response,
     payload: dict = Depends(authenticate_user)
 ):
@@ -273,7 +273,7 @@ async def get_user_crypto_info(
         "schnorrSig": targetUser["schnorrSig"],
     }
 
-    if isSend:
+    if isSend == "send":
         otpKeys = targetUser.get("otpKeys", [])
         if not otpKeys:
             raise HTTPException(
