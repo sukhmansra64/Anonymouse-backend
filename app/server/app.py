@@ -152,7 +152,9 @@ async def chatroom_message(sid, data):
         message=MessageDetails(
             content=message_details["content"],
             DHKey=message_details["DHKey"],
-            timestamp=message_details["timestamp"]
+            timestamp=message_details["timestamp"],
+            ephKey=message_details.get("ephKey"),
+            otpID=message_details.get("otpID"),
         )
     )
 
@@ -177,8 +179,8 @@ async def chatroom_message(sid, data):
             "message": {
                 "content": message_details["content"],
                 "DHKey": message_details["DHKey"],
-                "ephKey": message_details["ephKey"] if "ephKey" in message_details else None,
-                "otpID": message_details["otpID"] if "otpID" in message_details else None,
+                "ephKey": message_details.get("ephKey"),
+                "otpID": message_details.get("otpID"),
                 "timestamp": message_details["timestamp"]
             }
         },
