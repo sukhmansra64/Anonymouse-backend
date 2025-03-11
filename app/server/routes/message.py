@@ -44,7 +44,7 @@ async def get_messages(
     
     unread_messages = await db["Messages"].find({
         "chatroom": ObjectId(chatroom_id),
-        "readBy": {"$ne": user_id}  # Exclude messages where user_id is in readBy
+        "readBy": {"$ne": user_id}
     }).to_list(100)
 
     if not unread_messages:
@@ -59,6 +59,7 @@ async def get_messages(
     return unread_messages
 
 
+###DEPRECATED ROUTE###
 # @route POST api/message
 # @description Send a message to a chatroom
 # @access Protected
@@ -89,11 +90,14 @@ async def send_message(
         "sender": ObjectId(user_id),
         "message": {
             "content": message.message.content,
-            "pubKey": message.message.pubKey,
-            "privKeyId": message.message.privKeyId,
+            "DHKey": message.message.DHKey,
+            "ephKey": message.message.ephKey if message.message.ephKey else "",
+            "otpID": message.message.otpID if message.message.otpID else "",
             "timestamp": message.message.timestamp
-        }
+        },
+        "readBy": []
     }
+
 
     result = await db["Messages"].insert_one(message_dict)
     message_dict["_id"] = str(result.inserted_id)
@@ -105,8 +109,9 @@ async def send_message(
         sender=message_dict["sender"],
         message=MessageDetails(
             content=message_dict["message"]["content"],
-            pubKey=message_dict["message"]["pubKey"],
-            privKeyId=message_dict["message"]["privKeyId"],
+            DHKey=message_dict["message"]["DHKey"],
+            ephKey=message_dict["message"]["ephKey"],
+            otpID=message_dict["message"]["otpID"],
             timestamp=message_dict["message"]["timestamp"]
         )
     )

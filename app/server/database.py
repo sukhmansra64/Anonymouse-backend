@@ -11,7 +11,7 @@ client = AsyncIOMotorClient(URI) if URI else None
 def get_db():
     if not client:
         raise ValueError("MongoDB client is not initialized. Check your DB_URI environment variable.")
-    return client["Anonymouse"]
+    return client["Sukhman-RND"]
 
 
 

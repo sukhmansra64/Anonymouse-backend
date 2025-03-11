@@ -28,8 +28,9 @@ class PyObjectId(ObjectId):
 
 class MessageDetails(BaseModel):
     content: str
-    pubKey: str
-    privKeyId: str
+    ephKey: Optional[str]
+    otpID: Optional[str]
+    DHKey: str
     timestamp: str
 
 
@@ -51,8 +52,9 @@ class Message(BaseModel):
                 "sender": "507f191e810c19729de860ec",
                 "message": {
                     "content": "Hello, everyone!",
-                    "pubKey": "public_key_example",
-                    "privKeyId": "private_key_example",
+                    "ephKey": "public_key_example",
+                    "otpID": "private_key_example",
+                    "DHKey": "private_key_example",
                     "timestamp": "2024-12-02T12:00:00"
                 },
                 "readBy" : []
