@@ -275,7 +275,7 @@ async def update_otp_keys(otpKeys: list[dict], response: Response, payload: dict
 
     await db["Users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"optKeys": otpKeys}}
+        {"$push": {"otpKeys": {"$each": otpKeys}}}
     )
 
     response.status_code = status.HTTP_200_OK
