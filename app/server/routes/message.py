@@ -91,8 +91,8 @@ async def send_message(
         "message": {
             "content": message.message.content,
             "DHKey": message.message.DHKey,
-            "ephKey": message.message.ephKey if message.message.ephKey else "",
-            "otpID": message.message.otpID if message.message.otpID else "",
+            "ephKey": message.message.ephKey if "ephKey" in message.message else "",
+            "otpID": message.message.otpID if "otpID" in message.message else "",
             "timestamp": message.message.timestamp
         },
         "readBy": []
