@@ -239,4 +239,59 @@ async def delete_chatroom(
     response.status_code = status.HTTP_200_OK
     return f"Chatroom {chatroom_id} successfully deleted."
 
+#@route GET api/chatroom/{otherUserID}/{isSend}
+#@description Retrieves user info
+#@access Protected
+@router.get("/{otherUserID}/{isSend}", response_model=dict)
+async def get_user_crypto_info(
+    otherUserID: str,
+    isSend: bool,
+    response: Response,
+    payload: dict = Depends(authenticate_user)
+):
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload.",
+        )
+
+    targetUser = await db["Users"].find_one({"_id": ObjectId(otherUserID)})
+
+    if not targetUser:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found!",
+        )
+
+    user_data = {
+        "_id": str(targetUser["_id"]),
+        "username": targetUser["username"],
+        "identityKey": targetUser["identityKey"],
+        "schnorrKey": targetUser["schnorrKey"],
+        "schnorrSig": targetUser["schnorrSig"],
+    }
+
+    if isSend:
+        otpKeys = targetUser.get("otpKeys", [])
+        if not otpKeys:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No OTP keys available for this user."
+            )
+
+        poppedKey = otpKeys.pop(0)
+
+        await db["Users"].update_one(
+            {"_id": ObjectId(otherUserID)},
+            {"$set": {"otpKeys": otpKeys}}
+        )
+
+        user_data["otpKey"] = poppedKey
+
+    response.status_code = status.HTTP_200_OK
+    return user_data
+
+
 
