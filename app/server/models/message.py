@@ -29,7 +29,7 @@ class PyObjectId(ObjectId):
 class MessageDetails(BaseModel):
     content: str
     ephKey: Optional[str]
-    otpID: Optional[str]
+    otpID: Optional[int]
     DHKey: str
     timestamp: str
 
