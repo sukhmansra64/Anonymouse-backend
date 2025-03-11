@@ -53,7 +53,7 @@ class Message(BaseModel):
                 "message": {
                     "content": "Hello, everyone!",
                     "ephKey": "public_key_example",
-                    "otpID": "private_key_example",
+                    "otpID": 0,
                     "DHKey": "private_key_example",
                     "timestamp": "2024-12-02T12:00:00"
                 },
