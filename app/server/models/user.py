@@ -83,8 +83,8 @@ class UserRegister(BaseModel):
     username: str
     password: str
     identityKey: str
-    schnorKey: str
-    schnorSig: str
+    schnorrKey: str
+    schnorrSig: str
 
 class UserLogin(BaseModel):
     username: str
