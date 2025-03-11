@@ -61,8 +61,8 @@ async def create_user(new_user: UserRegister, response: Response):
         "password": hash["hashed_password"],
         "salt": hash["salt"],
         "identityKey": new_user.identityKey,
-        "schnorKey": new_user.schnorKey,
-        "schnorSig": new_user.schnorSig,
+        "schnorrKey": new_user.schnorrKey,
+        "schnorrSig": new_user.schnorrSig,
         "otpKeys": []
     }
 

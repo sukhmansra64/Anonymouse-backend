@@ -32,8 +32,8 @@ class User(BaseModel):
     username: str
     password: str
     identityKey: str
-    schnorKey: str
-    schnorSig: str
+    schnorrKey: str
+    schnorrSig: str
     otpKeys: Optional[List[Dict[int, str]]]
 
     class Config:
@@ -45,8 +45,8 @@ class User(BaseModel):
                 "username": "john_doe",
                 "password": "Secure password",
                 "identityKey": "identity key",
-                "schnorKey": "Schnor Key",
-                "schnorSig": "Schnor Sig",
+                "schnorrKey": "Schnor Key",
+                "schnorrSig": "Schnor Sig",
                 "otpKeys": [
                     {1: "DH Public Key 1"},
                     {2: "DH Public Key 2"}
@@ -58,8 +58,8 @@ class UserResponse(User):
     password: Optional[str] = Field(default=None, exclude=True)
     id: Optional[PyObjectId] = Field(alias="_id")
     identityKey: str
-    schnorKey: str
-    schnorSig: str
+    schnorrKey: str
+    schnorrSig: str
     username: str
     otpKeys: Optional[List[Dict[int, str]]]
 
@@ -70,8 +70,8 @@ class UserResponse(User):
                 "_id": "507f191e810c19729de860ea",
                 "username": "john_doe",
                 "identityKey": "identity key",
-                "schnorKey": "Schnor Key",
-                "schnorSig": "Schnor Sig",
+                "schnorrKey": "Schnor Key",
+                "schnorrSig": "Schnor Sig",
                 "otpKeys": [
                     {1: "DH Public Key 1"},
                     {2: "DH Public Key 2"}
