@@ -158,13 +158,6 @@ async def chatroom_message(sid, data):
         )
     )
 
-    if "otpID" in message_details:
-        message.message.otpID = message_details["otpID"]
-    
-    if "ephKey" in message_details:
-        message.message.otpID = message_details["ephKey"]
-
-    
     result = await db["Messages"].insert_one(message.dict(by_alias=True))
     saved_message = message.dict(by_alias=True)
     saved_message["_id"] = str(result.inserted_id)
