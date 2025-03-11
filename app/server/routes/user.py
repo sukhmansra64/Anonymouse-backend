@@ -103,7 +103,7 @@ async def login(user_login: UserLogin, response: Response):
     
     response.status_code = status.HTTP_200_OK
     return {
-        "message": f"{user['profile']['name']} has been logged in successfully.",
+        "message": f"User has been logged in successfully.",
         "token": token,
         "otpKeys": len(user["otpKeys"])
     }
