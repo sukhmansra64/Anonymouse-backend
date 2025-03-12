@@ -26,32 +26,30 @@ class PyObjectId(ObjectId):
     def __pydantic_modify_json_schema__(cls, schema: dict) -> None:
         schema.update(type="string")
 
-class Profile(BaseModel):
-    name: str
-    about: str
-
 
 class User(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     username: str
     password: str
-    profile: Profile
-    dh_keys: List[Dict[str, str]] = Field(default=[])
+    identityKey: str
+    schnorrKey: str
+    schnorrSig: str
+    otpKeys: Optional[List[Dict[int, str]]]
 
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
         json_schema_extra = {
-            "example": {
+           "example": {
+                "_id": "507f191e810c19729de860ea",
                 "username": "john_doe",
-                "password": "securepassword",
-                "profile": {
-                    "name": "John Doe",
-                    "about": "A software engineer passionate about AI.",
-                },
-                "dh_keys": [
-                    {"key1": "DH Public Key 1"},
-                    {"key2": "DH Public Key 2"}
+                "password": "Secure password",
+                "identityKey": "identity key",
+                "schnorrKey": "Schnor Key",
+                "schnorrSig": "Schnor Sig",
+                "otpKeys": [
+                    {1: "DH Public Key 1"},
+                    {2: "DH Public Key 2"}
                 ]
             }
         }
@@ -59,9 +57,11 @@ class User(BaseModel):
 class UserResponse(User):
     password: Optional[str] = Field(default=None, exclude=True)
     id: Optional[PyObjectId] = Field(alias="_id")
+    identityKey: str
+    schnorrKey: str
+    schnorrSig: str
     username: str
-    profile: Optional[Dict[str, str]]
-    dh_keys: Optional[List[Dict[str, str]]]
+    otpKeys: Optional[List[Dict[int, str]]]
 
     class Config:
         json_encoders = {ObjectId: str}
@@ -69,13 +69,12 @@ class UserResponse(User):
             "example": {
                 "_id": "507f191e810c19729de860ea",
                 "username": "john_doe",
-                "profile": {
-                    "name": "John Doe",
-                    "about": "A software engineer passionate about AI."
-                },
-                "dh_keys": [
-                    {"key1": "DH Public Key 1"},
-                    {"key2": "DH Public Key 2"}
+                "identityKey": "identity key",
+                "schnorrKey": "Schnor Key",
+                "schnorrSig": "Schnor Sig",
+                "otpKeys": [
+                    {1: "DH Public Key 1"},
+                    {2: "DH Public Key 2"}
                 ]
             }
         }
@@ -83,6 +82,9 @@ class UserResponse(User):
 class UserRegister(BaseModel):
     username: str
     password: str
+    identityKey: str
+    schnorrKey: str
+    schnorrSig: str
 
 class UserLogin(BaseModel):
     username: str

@@ -60,11 +60,10 @@ async def create_user(new_user: UserRegister, response: Response):
         "username": username,
         "password": hash["hashed_password"],
         "salt": hash["salt"],
-        "profile": {          
-            "name": "",
-            "about": "",
-        },
-        "dh_keys": []
+        "identityKey": new_user.identityKey,
+        "schnorrKey": new_user.schnorrKey,
+        "schnorrSig": new_user.schnorrSig,
+        "otpKeys": new_user.otpKeys if "otpKeys" in new_user else []
     }
 
     result = await db["Users"].insert_one(user_dict)
@@ -104,8 +103,9 @@ async def login(user_login: UserLogin, response: Response):
     
     response.status_code = status.HTTP_200_OK
     return {
-        "message": f"{user['profile']['name']} has been logged in successfully.",
+        "message": f"User has been logged in successfully.",
         "token": token,
+        "otpKeys": len(user["otpKeys"])
     }
 
 # @route GET api/user
@@ -119,10 +119,10 @@ async def get_all_users(
     users = await db["Users"].find().to_list()
 
     for user in users:
-        if "dh_keys" in user and isinstance(user["dh_keys"], list):
-            user["dh_keys"] = [
-                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
-                if isinstance(k, str) and isinstance(v, str) 
+        if "otpKeys" in user and isinstance(user["otpKeys"], list):
+            user["otpKeys"] = [
+                {int(k): str(v)} for key in user["otpKeys"] for k, v in key.items()
+                if isinstance(k, int) and isinstance(v, str) 
             ]
 
     response.status_code = status.HTTP_200_OK
@@ -144,10 +144,10 @@ async def get_user(
             detail="User not found!"
         )
     
-    if "dh_keys" in user and isinstance(user["dh_keys"], list):
-            user["dh_keys"] = [
-                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
-                if isinstance(k, str) and isinstance(v, str) 
+    if "otpKeys" in user and isinstance(user["otpKeys"], list):
+            user["otpKeys"] = [
+                {int(k): str(v)} for key in user["otpKeys"] for k, v in key.items()
+                if isinstance(k, int) and isinstance(v, str) 
             ]
     
     response.status_code = status.HTTP_200_OK
@@ -171,10 +171,10 @@ async def getUserByName(userName: str, response: Response, payload:dict = Depend
             detail="Username not found!"
         )
     for user in users:
-        if "dh_keys" in user and isinstance(user["dh_keys"], list):
-            user["dh_keys"] = [
-                {str(k): str(v)} for key in user["dh_keys"] for k, v in key.items()
-                if isinstance(k, str) and isinstance(v, str) 
+        if "otpKeys" in user and isinstance(user["otpKeys"], list):
+            user["otpKeys"] = [
+                {int(k): str(v)} for key in user["otpKeys"] for k, v in key.items()
+                if isinstance(k, int) and isinstance(v, str) 
             ]
     response.status_code = status.HTTP_200_OK
     return users
@@ -213,10 +213,10 @@ async def update_user(
             detail="User not found after update!"
         )
     
-    if "dh_keys" in updated_user and isinstance(user["dh_keys"], list):
-            updated_user["dh_keys"] = [
-                {str(k): str(v)} for key in updated_user["dh_keys"] for k, v in key.items()
-                if isinstance(k, str) and isinstance(v, str) 
+    if "otpKeys" in updated_user and isinstance(updated_user["otpKeys"], list):
+            updated_user["otpKeys"] = [
+                {int(k): str(v)} for key in updated_user["otpKeys"] for k, v in key.items()
+                if isinstance(k, int) and isinstance(v, str) 
             ]
     
     response.status_code = status.HTTP_200_OK
@@ -248,11 +248,11 @@ async def delete_user(
     response.status_code = status.HTTP_200_OK
     return "User deleted."
 
-# @route PUT api/user/dh_keys
-# @description Overwrites the authenticated user's dh_keys array with a new array
+# @route PUT api/user/otpKeys
+# @description Overwrites the authenticated user's otpKeys array with a new array
 # @access Private
-@router.put("/dh_keys", response_model=str)
-async def update_dh_keys(dh_keys: list[dict], response: Response, payload: dict = Depends(authenticate_user)):
+@router.put("/otpKeys", response_model=str)
+async def update_otp_keys(otpKeys: list[dict], response: Response, payload: dict = Depends(authenticate_user)):
     user_id = payload.get("user_id")
     if not user_id:
         raise HTTPException(
@@ -267,25 +267,25 @@ async def update_dh_keys(dh_keys: list[dict], response: Response, payload: dict 
             detail="User not found!",
         )
 
-    if not isinstance(dh_keys, list) or any(not isinstance(key, dict) for key in dh_keys):
+    if not isinstance(otpKeys, list) or any(not isinstance(key, dict) for key in otpKeys):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid format for Diffie-Hellman keys. Expected an array of objects.",
+            detail="Invalid format for OTP keys. Expected an array of objects.",
         )
 
     await db["Users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"dh_keys": dh_keys}}
+        {"$push": {"otpKeys": {"$each": otpKeys}}}
     )
 
     response.status_code = status.HTTP_200_OK
-    return "Diffie-Hellman keys updated successfully."
+    return "OTP keys updated successfully."
 
-# @route DELETE api/user/dh_key/{username}
-# @description Pop a Diffie-Hellman key pair by username
+# @route DELETE api/user/otpKeys/{username}
+# @description Pop a OTP key pair by username
 # @access Protected
-@router.delete("/dh_keys/{user_id}", response_model=dict)
-async def pop_dh_key(
+@router.delete("/otpKeys/{user_id}", response_model=dict)
+async def pop_otp_key(
     user_id: str,
     response: Response,
     payload: dict = Depends(authenticate_user)
@@ -304,18 +304,18 @@ async def pop_dh_key(
             detail="Authenticated user not found!"
         )
 
-    dh_keys = target_user.get("dh_keys", [])
-    if not dh_keys:
+    otpKeys = target_user.get("otpKeys", [])
+    if not otpKeys:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No Diffie-Hellman keys available for this user."
+            detail="No OTP keys available for this user."
         )
 
-    popped_key = dh_keys.pop(0)
+    popped_key = otpKeys.pop(0)
 
     await db["Users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"dh_keys": dh_keys}}
+        {"$set": {"otpKeys": otpKeys}}
     )
 
     response.status_code = status.HTTP_200_OK
