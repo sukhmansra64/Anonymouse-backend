@@ -228,7 +228,7 @@ async def delete_chatroom(
         )
     
     for member in members:
-        chatroomName = generate_chatroom_name(members,member)
+        chatroomName = await generate_chatroom_name(members,member)
         await socket_manager.emit(
             "chatroomDeleted",
             {"chatroomID": f"{deleted_id}", "chatroomName": f"{chatroomName}"},
