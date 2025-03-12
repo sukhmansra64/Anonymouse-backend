@@ -228,9 +228,10 @@ async def delete_chatroom(
         )
     
     for member in members:
+        chatroomName = generate_chatroom_name(members,member)
         await socket_manager.emit(
             "chatroomDeleted",
-            {"message": f"{deleted_id}"},
+            {"chatroomID": f"{deleted_id}", "chatroomName": f"{chatroomName}"},
             room=str(member) 
         )
 
