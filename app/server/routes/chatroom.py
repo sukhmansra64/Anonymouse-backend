@@ -210,6 +210,7 @@ async def delete_chatroom(
     
     deleted_id = chatroom["_id"]
     members = list(chatroom["members"])
+    isFirstMessage = chatroom["firstMessage"]
 
     if ObjectId(user_id) not in chatroom["members"]:
         raise HTTPException(
@@ -227,13 +228,14 @@ async def delete_chatroom(
             detail="Failed to delete chatroom."
         )
     
-    for member in members:
-        chatroomName = await generate_chatroom_name(members,member)
-        await socket_manager.emit(
-            "chatroomDeleted",
-            {"chatroomID": f"{deleted_id}", "chatroomName": f"{chatroomName}"},
-            room=str(member) 
-        )
+    if isFirstMessage:
+        for member in members:
+            chatroomName = await generate_chatroom_name(members,member)
+            await socket_manager.emit(
+                "chatroomDeleted",
+                {"chatroomID": f"{deleted_id}", "chatroomName": f"{chatroomName}"},
+                room=str(member) 
+            )
 
 
 
