@@ -1,6 +1,6 @@
 # Backend
 
-This is a FastAPI-based chatroom application that supports user authentication, chatroom creation, message management, and real-time communication using Socket.IO.
+This is a FastAPI-based chatroom application that supports user authentication, chatroom creation, message management, and real-time communication using Socket.IO. This was made for our engineering capstone. See the demo [here!](https://www.youtube.com/watch?v=xGRWfsndguw)
 
 ---
 
